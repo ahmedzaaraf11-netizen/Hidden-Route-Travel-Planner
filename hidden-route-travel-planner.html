@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Hidden Route — AI Trip Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B2A4A;
+    --ink-soft:#3B4A68;
+    --paper:#F5EFD8;
+    --paper-alt:#ECE3BC;
+    --paper-deep:#E4D9A8;
+    --brass:#A9803F;
+    --brass-dark:#8A672F;
+    --moss:#51624F;
+    --garnet:#8B3A3A;
+    --line:#C9BD98;
+    --white:#FFFDF6;
+    --radius-ticket: 4px;
+    --serif: "Fraunces", Georgia, "Times New Roman", serif;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    line-height:1.55;
+  }
+  ::selection{ background:var(--brass); color:var(--white); }
+  a{ color:inherit; }
+
+  :focus-visible{
+    outline:2px solid var(--garnet);
+    outline-offset:3px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; }
+  }
+
+  .wrap{
+    max-width:920px;
+    margin:0 auto;
+    padding:0 24px;
+  }
+
+  /* ---------- HEADER / HERO ---------- */
+  header.top{
+    padding:28px 0 0;
+    border-bottom:1px solid var(--line);
+  }
+  .brand{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    padding-bottom:20px;
+  }
+  .brand-mark{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:1.15rem;
+    letter-spacing:0.01em;
+  }
+  .brand-mark span{ font-style:italic; color:var(--brass-dark); }
+  .brand-sub{
+    font-size:0.78rem;
+    color:var(--ink-soft);
+  }
+
+  .hero{
+    position:relative;
+    padding:56px 0 72px;
+    overflow:hidden;
+  }
+  .route-line{
+    position:absolute;
+    top:18px;
+    right:-40px;
+    width:340px;
+    height:auto;
+    opacity:0.55;
+  }
+  .hero h1{
+    font-family:var(--serif);
+    font-weight:500;
+    font-size:clamp(2.1rem, 5vw, 3.4rem);
+    line-height:1.08;
+    max-width:11.5em;
+    margin:0 0 20px;
+  }
+  .hero h1 em{
+    font-style:italic;
+    color:var(--brass-dark);
+  }
+  .hero p.lede{
+    max-width:46ch;
+    font-size:1.05rem;
+    color:var(--ink-soft);
+    margin:0;
+  }
+
+  /* ---------- SEARCH TICKET ---------- */
+  .ticket{
+    position:relative;
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:var(--radius-ticket);
+    padding:32px 32px 28px;
+    margin-top:44px;
+    box-shadow:0 1px 0 var(--line);
+  }
+  .ticket::before, .ticket::after{
+    content:"";
+    position:absolute;
+    width:22px; height:22px;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:50%;
+    top:50%;
+    transform:translateY(-50%);
+  }
+  .ticket::before{ left:-11px; }
+  .ticket::after{ right:-11px; }
+
+  .field-row{
+    display:grid;
+    grid-template-columns:1.4fr 0.7fr;
+    gap:24px;
+  }
+  @media (max-width:620px){
+    .field-row{ grid-template-columns:1fr; }
+  }
+
+  .field label{
+    display:block;
+    font-size:0.72rem;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+    font-weight:600;
+  }
+  .field input[type=text], .field input[type=number]{
+    width:100%;
+    font-family:var(--sans);
+    font-size:1.05rem;
+    padding:10px 2px;
+    border:none;
+    border-bottom:1.5px solid var(--line);
+    background:transparent;
+    color:var(--ink);
+  }
+  .field input:focus{
+    border-bottom-color:var(--brass);
+  }
+
+  .tier-set{
+    display:flex;
+    gap:8px;
+    margin-top:22px;
+    flex-wrap:wrap;
+  }
+  .tier-set legend{
+    font-size:0.72rem;
+    color:var(--ink-soft);
+    font-weight:600;
+    margin-bottom:8px;
+    width:100%;
+  }
+  .tier-opt{
+    position:relative;
+  }
+  .tier-opt input{
+    position:absolute;
+    opacity:0;
+    width:100%; height:100%;
+    cursor:pointer;
+    margin:0;
+  }
+  .tier-opt label{
+    display:block;
+    padding:9px 16px;
+    border:1px solid var(--line);
+    border-radius:20px;
+    font-size:0.88rem;
+    cursor:pointer;
+    color:var(--ink-soft);
+  }
+  .tier-opt input:checked + label{
+    background:var(--ink);
+    border-color:var(--ink);
+    color:var(--white);
+  }
+  .tier-opt input:focus-visible + label{
+    outline:2px solid var(--garnet);
+    outline-offset:2px;
+  }
+
+  .plan-btn{
+    margin-top:26px;
+    font-family:var(--sans);
+    font-weight:600;
+    font-size:0.98rem;
+    background:var(--garnet);
+    color:var(--white);
+    border:none;
+    padding:14px 26px;
+    border-radius:2px;
+    cursor:pointer;
+  }
+  .plan-btn:hover{ background:#742f2f; }
+
+  .hint{
+    margin-top:14px;
+    font-size:0.82rem;
+    color:var(--ink-soft);
+  }
+  .hint button{
+    background:none; border:none; padding:0;
+    color:var(--brass-dark);
+    text-decoration:underline;
+    cursor:pointer;
+    font-size:0.82rem;
+    font-family:var(--sans);
+  }
+
+  .notice{
+    margin-top:16px;
+    font-size:0.9rem;
+    padding:12px 14px;
+    background:var(--paper-alt);
+    border-left:3px solid var(--garnet);
+    display:none;
+  }
+  .notice.show{ display:block; }
+
+  /* ---------- RESULTS ---------- */
+  #results{ display:none; padding:16px 0 90px; }
+  #results.show{ display:block; }
+
+  .dest-heading{
+    padding-top:8px;
+  }
+  .dest-heading .place{
+    font-family:var(--serif);
+    font-size:clamp(1.7rem, 4vw, 2.3rem);
+    font-weight:500;
+    margin:0 0 4px;
+  }
+  .dest-heading .tag{
+    color:var(--moss);
+    font-size:0.95rem;
+    font-style:italic;
+    font-family:var(--serif);
+  }
+
+  .section-label{
+    font-family:var(--serif);
+    font-style:italic;
+    font-size:1.3rem;
+    margin:56px 0 22px;
+    color:var(--ink);
+    border-bottom:1px solid var(--line);
+    padding-bottom:10px;
+  }
+
+  /* timeline */
+  .timeline{
+    position:relative;
+    padding-left:34px;
+  }
+  .timeline::before{
+    content:"";
+    position:absolute;
+    left:7px; top:6px; bottom:6px;
+    width:1px;
+    background:var(--line);
+  }
+  .day{
+    position:relative;
+    padding-bottom:34px;
+  }
+  .day:last-child{ padding-bottom:0; }
+  .day::before{
+    content:"";
+    position:absolute;
+    left:-34px; top:4px;
+    width:15px; height:15px;
+    border-radius:50%;
+    background:var(--paper);
+    border:2px solid var(--brass);
+  }
+  .day-title{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:1.15rem;
+    margin:0 0 4px;
+  }
+  .day-note{
+    font-size:0.85rem;
+    color:var(--ink-soft);
+    margin:0 0 12px;
+    font-style:italic;
+  }
+  .stops{
+    list-style:none;
+    margin:0; padding:0;
+  }
+  .stops li{
+    padding:10px 0;
+    border-top:1px solid var(--line);
+    display:grid;
+    grid-template-columns:88px 1fr;
+    gap:14px;
+  }
+  .stops li:first-child{ border-top:none; }
+  .stops .slot{
+    font-size:0.78rem;
+    color:var(--brass-dark);
+    font-weight:600;
+    padding-top:2px;
+  }
+  .stops .stop-name{
+    font-weight:600;
+    margin:0 0 2px;
+  }
+  .stops .stop-desc{
+    margin:0;
+    color:var(--ink-soft);
+    font-size:0.92rem;
+  }
+
+  /* budget ledger */
+  .ledger{
+    border-top:1px solid var(--ink);
+    border-bottom:1px solid var(--ink);
+  }
+  .ledger table{
+    width:100%;
+    border-collapse:collapse;
+    font-family:var(--sans);
+  }
+  .ledger th{
+    text-align:left;
+    font-size:0.72rem;
+    text-transform:none;
+    color:var(--ink-soft);
+    font-weight:600;
+    padding:10px 4px;
+    border-bottom:1px solid var(--line);
+  }
+  .ledger td{
+    padding:11px 4px;
+    border-bottom:1px solid var(--paper-deep);
+    font-size:0.95rem;
+  }
+  .ledger td.num, .ledger th.num{ text-align:right; font-variant-numeric:tabular-nums; }
+  .ledger tr.total td{
+    border-bottom:none;
+    padding-top:16px;
+    font-weight:700;
+    font-family:var(--serif);
+    font-size:1.15rem;
+  }
+  .ledger-foot{
+    padding:12px 4px 0;
+    font-size:0.82rem;
+    color:var(--ink-soft);
+  }
+
+  /* hidden gems */
+  .gems{
+    display:grid;
+    gap:20px;
+    grid-template-columns:repeat(auto-fit, minmax(240px,1fr));
+  }
+  .gem-card{
+    position:relative;
+    background:var(--white);
+    border:1px solid var(--line);
+    padding:22px 20px;
+    min-height:150px;
+  }
+  .gem-content{
+    filter:blur(7px);
+    user-select:none;
+    transition:filter 0.5s ease;
+  }
+  .gem-card.revealed .gem-content{
+    filter:blur(0);
+  }
+  .gem-content .gem-name{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:1.05rem;
+    margin:0 0 6px;
+  }
+  .gem-content .gem-desc{
+    margin:0;
+    font-size:0.9rem;
+    color:var(--ink-soft);
+  }
+  .gem-clue{
+    font-size:0.78rem;
+    font-style:italic;
+    color:var(--moss);
+    margin:0 0 12px;
+  }
+  .wax-seal{
+    position:absolute;
+    top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    width:58px; height:58px;
+    border-radius:50%;
+    background:var(--garnet);
+    border:none;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 2px 6px rgba(0,0,0,0.25);
+    transition:transform 0.4s ease, opacity 0.4s ease;
+  }
+  .wax-seal svg{ width:24px; height:24px; }
+  .wax-seal:hover{ background:#742f2f; }
+  .wax-seal.broken{
+    transform:translate(-50%,-50%) scale(1.6) rotate(25deg);
+    opacity:0;
+    pointer-events:none;
+  }
+  .gem-card.revealed .wax-seal{ display:none; }
+
+  footer{
+    border-top:1px solid var(--line);
+    padding:26px 0 40px;
+    font-size:0.8rem;
+    color:var(--ink-soft);
+  }
+  footer p{ margin:0 0 6px; max-width:60ch; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap brand">
+    <div>
+      <div class="brand-mark">The Hidden <span>Route</span></div>
+      <div class="brand-sub">an AI-assisted trip planner · BCA final year project</div>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <svg class="route-line" viewBox="0 0 340 120" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M10 100 C 80 20, 150 120, 220 40 S 320 10, 330 15" stroke="#A9803F" stroke-width="1.4" stroke-dasharray="1 8" stroke-linecap="round"/>
+    <circle cx="10" cy="100" r="4" fill="#8B3A3A"/>
+    <circle cx="220" cy="40" r="4" fill="#51624F"/>
+    <circle cx="330" cy="15" r="4" fill="#A9803F"/>
+  </svg>
+  <div class="wrap">
+    <h1>Tell it where. It plans the <em>days</em>, the <em>rupees</em>, and the places <em>maps don't show</em>.</h1>
+    <p class="lede">Pick a place and how long you're going for. You'll get a day-by-day route, a rough budget broken down like a travel ledger, and at least one place locals rarely mention to outsiders.</p>
+
+    <form class="ticket" id="plan-form">
+      <div class="field-row">
+        <div class="field">
+          <label for="dest-input">Where are you headed</label>
+          <input type="text" id="dest-input" list="dest-list" placeholder="e.g. Udaipur, Goa, Ladakh…" autocomplete="off" required>
+          <datalist id="dest-list"></datalist>
+        </div>
+        <div class="field">
+          <label for="days-input">Days</label>
+          <input type="number" id="days-input" min="1" max="10" value="3" required>
+        </div>
+      </div>
+
+      <fieldset class="tier-set" style="border:none;padding:0;margin:0;">
+        <legend>Travel style</legend>
+        <div class="tier-opt">
+          <input type="radio" name="tier" id="tier-budget" value="budget" checked>
+          <label for="tier-budget">Shoestring</label>
+        </div>
+        <div class="tier-opt">
+          <input type="radio" name="tier" id="tier-comfort" value="comfort">
+          <label for="tier-comfort">Comfortable</label>
+        </div>
+        <div class="tier-opt">
+          <input type="radio" name="tier" id="tier-premium" value="premium">
+          <label for="tier-premium">Premium</label>
+        </div>
+      </fieldset>
+
+      <button type="submit" class="plan-btn">Plan the trip</button>
+      <p class="hint">This prototype's planner knows 10 destinations well — <button type="button" id="show-list-btn">see which ones</button>.</p>
+      <p class="notice" id="unknown-notice">That place isn't in this prototype's dataset yet. Try one from the list above — Goa, Udaipur, Jaipur, Manali, Rishikesh, Munnar, Leh–Ladakh, Andaman, Varanasi, or Pondicherry.</p>
+    </form>
+  </div>
+</section>
+
+<div class="wrap">
+  <div id="results">
+    <div class="dest-heading">
+      <p class="place" id="res-place"></p>
+      <p class="tag" id="res-tag"></p>
+    </div>
+
+    <h2 class="section-label">The route</h2>
+    <div class="timeline" id="timeline"></div>
+
+    <h2 class="section-label">The ledger</h2>
+    <div class="ledger">
+      <table>
+        <thead>
+          <tr><th>What it's for</th><th class="num">Per day</th><th class="num">× days</th></tr>
+        </thead>
+        <tbody id="ledger-body"></tbody>
+      </table>
+    </div>
+    <p class="ledger-foot" id="ledger-foot"></p>
+
+    <h2 class="section-label">Off the map</h2>
+    <div class="gems" id="gems"></div>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <p>Built as an academic demonstration. Attractions, hidden-gem notes and cost estimates are hand-curated for this prototype rather than pulled from a live source, and real prices vary by season and how you book.</p>
+    <p>The Hidden Route — a BCA final year project on AI-assisted travel planning.</p>
+  </div>
+</footer>
+
+<script>
+/* ---------------- DATA ---------------- */
+const DATA = {
+  "Goa": {
+    tag: "Beaches, Portuguese lanes, and sunset shacks on the Arabian Sea",
+    currency: "₹",
+    cost: { budget: {stay:700, food:500, transport:250, activity:350}, comfort: {stay:2200, food:1000, transport:500, activity:800}, premium: {stay:6000, food:2200, transport:1200, activity:1800} },
+    attractions: [
+      {name:"Baga & Calangute Beach walk", desc:"Watersports and the busiest shoreline in North Goa, good for a first afternoon."},
+      {name:"Fort Aguada", desc:"17th-century Portuguese fort with a lighthouse and sea views over the Mandovi river mouth."},
+      {name:"Old Goa churches", desc:"Basilica of Bom Jesus and Sé Cathedral, both UNESCO-listed, in the old colonial capital."},
+      {name:"Anjuna flea market", desc:"Runs on Wednesdays — stalls, live music, and the old hippie-trail atmosphere."},
+      {name:"Dudhsagar Falls day trip", desc:"A jeep-and-trek excursion to one of India's tallest waterfalls, on the Goa–Karnataka border."},
+      {name:"Panjim Latin Quarter (Fontainhas)", desc:"Pastel-coloured lanes, azulejo tiles, and small cafés in the old town."}
+    ],
+    hiddenGems: [
+      {clue:"South of the party crowds, past a fishing village most tourists never turn into.", name:"Cola Beach", desc:"A cove with a freshwater lagoon backing right onto the sand, reached by a dirt track few taxis will attempt."},
+      {clue:"An abandoned settlement swallowed by the jungle, a short trek off a spice-plantation road.", name:"Curdi (Old Curdi Village)", desc:"A submerged village that resurfaces from a reservoir every summer — ruins, a temple, and total silence."}
+    ]
+  },
+  "Udaipur": {
+    tag: "Lakes, marble palaces, and the old Mewar capital",
+    currency: "₹",
+    cost: { budget: {stay:600, food:450, transport:200, activity:300}, comfort: {stay:2500, food:900, transport:450, activity:700}, premium: {stay:8000, food:2000, transport:1000, activity:1600} },
+    attractions: [
+      {name:"City Palace complex", desc:"A sprawl of courtyards and museums overlooking Lake Pichola, built up over four centuries."},
+      {name:"Lake Pichola boat ride", desc:"A sunset boat trip past Jag Mandir island and the ghats."},
+      {name:"Saheliyon-ki-Bari", desc:"A garden of fountains built for royal ladies-in-waiting — quiet and shaded in the afternoon heat."},
+      {name:"Bagore-ki-Haveli & the evening Dharohar show", desc:"A restored haveli on the lakefront with a folk-dance performance most evenings."},
+      {name:"Fateh Sagar Lake & Nehru Park", desc:"A second, quieter lake with a boat ride out to a garden island."},
+      {name:"Monsoon Palace (Sajjangarh)", desc:"A hilltop palace with the best sunset view over the whole city and lake."}
+    ],
+    hiddenGems: [
+      {clue:"A stepwell hidden behind a residential lane, easy to walk past without noticing.", name:"Jagdish Chowk Baori", desc:"A small, little-visited stepwell tucked minutes from the City Palace, almost always empty."},
+      {clue:"Follow the lake road north, past where the tour buses turn back.", name:"Badi Lake at dawn", desc:"A rural lake ringed by cenotaphs and hills, popular with local joggers but almost unknown to visitors."}
+    ]
+  },
+  "Jaipur": {
+    tag: "The Pink City — forts, bazaars, and Rajput architecture",
+    currency: "₹",
+    cost: { budget: {stay:600, food:450, transport:250, activity:350}, comfort: {stay:2300, food:900, transport:500, activity:750}, premium: {stay:7500, food:2000, transport:1100, activity:1700} },
+    attractions: [
+      {name:"Amer Fort", desc:"A hilltop fort-palace with mirrored halls, best visited early to avoid the midday crowds."},
+      {name:"City Palace & Jantar Mantar", desc:"The royal residence plus a UNESCO-listed 18th-century astronomical observatory next door."},
+      {name:"Hawa Mahal", desc:"The five-storey 'Palace of Winds', best photographed from the tea-house across the street."},
+      {name:"Johari Bazaar & Bapu Bazaar", desc:"Old-city markets for jewellery, textiles, and leather juttis."},
+      {name:"Nahargarh Fort at sunset", desc:"A ridge-top fort with a panoramic view over the whole city as it lights up."},
+      {name:"Chokhi Dhani village evening", desc:"A recreated Rajasthani village on the edge of town, with folk shows and a thali dinner."}
+    ],
+    hiddenGems: [
+      {clue:"Behind Amer Fort, on a ridge most rickshaws won't drive up to.", name:"Nahargarh's Sisodia side trail", desc:"A quiet stepped path with abandoned watchtowers and a view back over Amer few day-trippers reach."},
+      {clue:"A stepwell that starred in a film — most people don't realise it's not staged, or where it is.", name:"Panna Meena ka Kund", desc:"A geometric 16th-century stepwell in a residential pocket near Amer, usually near-empty by mid-morning."}
+    ]
+  },
+  "Manali": {
+    tag: "Pine valleys and mountain passes in Himachal",
+    currency: "₹",
+    cost: { budget: {stay:600, food:400, transport:300, activity:400}, comfort: {stay:2200, food:850, transport:600, activity:900}, premium: {stay:6500, food:1900, transport:1400, activity:2000} },
+    attractions: [
+      {name:"Old Manali & the Manu Temple", desc:"Cafés, orchards, and river-side lanes across the Manalsu stream from the main town."},
+      {name:"Solang Valley", desc:"Paragliding, zorbing, and cable cars against a backdrop of snow peaks."},
+      {name:"Hadimba Devi Temple", desc:"A wooden pagoda-style temple set inside a cedar forest."},
+      {name:"Rohtang Pass / Atal Tunnel day trip", desc:"High-altitude snow views, permit-dependent and weather-dependent in season."},
+      {name:"Jogini Waterfall trek", desc:"A moderate hike above Vashisht village to a multi-tier waterfall."},
+      {name:"Vashisht hot springs", desc:"Natural sulphur springs beside an old stone temple, good for a slow last morning."}
+    ],
+    hiddenGems: [
+      {clue:"Past the last café in Old Manali, where the trail forgets to have signs.", name:"Lama Dugh meadow", desc:"A high alpine meadow above town reached by a half-day trek, with grazing horses and almost no other trekkers."},
+      {clue:"A village on the 'wrong' side of the river that most itineraries skip entirely.", name:"Gulaba village", desc:"A quiet apple-growing hamlet on the road toward Rohtang, with views most tour buses drive straight past."}
+    ]
+  },
+  "Rishikesh": {
+    tag: "Ganga ghats, ashrams, and the foothills of the Himalayas",
+    currency: "₹",
+    cost: { budget: {stay:500, food:350, transport:200, activity:400}, comfort: {stay:1800, food:750, transport:450, activity:900}, premium: {stay:5500, food:1700, transport:1000, activity:2200} },
+    attractions: [
+      {name:"Laxman Jhula & Ram Jhula", desc:"The two suspension bridges that anchor the town, lined with temples and cafés."},
+      {name:"Triveni Ghat evening aarti", desc:"A riverside prayer ceremony at dusk, with lamps set afloat on the Ganga."},
+      {name:"Beatles Ashram (Chaurasi Kutia)", desc:"The abandoned ashram where the Beatles studied meditation in 1968, now covered in murals."},
+      {name:"White-water rafting", desc:"Rapids on the Ganga graded for beginners through to more technical stretches upstream."},
+      {name:"Neelkanth Mahadev Temple trek", desc:"A forest trek or drive to a Shiva temple in the hills above town."},
+      {name:"Kunjapuri Devi Temple sunrise", desc:"An early drive and short climb for a Himalayan sunrise view."}
+    ],
+    hiddenGems: [
+      {clue:"Upstream past the last rafting camp, where the valley narrows.", name:"Patna Waterfall", desc:"A little-visited waterfall and pool north of town, reached by a short walk most rafting groups drive straight past."},
+      {clue:"A village trail behind Kunjapuri that guidebooks rarely mention by name.", name:"Garud Chatti village path", desc:"A quiet forest walk connecting two hill villages, with river views and no entry fee or crowd."}
+    ]
+  },
+  "Munnar": {
+    tag: "Tea hills and cloud-forest valleys in Kerala",
+    currency: "₹",
+    cost: { budget: {stay:800, food:450, transport:300, activity:400}, comfort: {stay:2800, food:950, transport:650, activity:900}, premium: {stay:8500, food:2200, transport:1500, activity:2200} },
+    attractions: [
+      {name:"Tea gardens & Tea Museum", desc:"Rolling plantation hills and a small museum on how Munnar's tea industry began."},
+      {name:"Eravikulam National Park", desc:"Home to the endangered Nilgiri tahr, with a shuttle bus up into the grasslands."},
+      {name:"Mattupetty Dam & boating", desc:"A reservoir ringed by hills, popular for a short boat ride and echo point."},
+      {name:"Top Station viewpoint", desc:"A high pass on the Tamil Nadu border with valley views on a clear day."},
+      {name:"Attukad Waterfalls", desc:"A three-tier waterfall a short walk from the main road."},
+      {name:"Kolukkumalai sunrise tea estate", desc:"One of the world's highest tea estates, best reached before dawn by jeep."}
+    ],
+    hiddenGems: [
+      {clue:"A shepherd's trail behind the tahr sanctuary that the shuttle bus never takes.", name:"Meesapulimala base trail", desc:"The approach path to Kerala's second-highest peak — rolling shola grassland with almost no other visitors on a weekday."},
+      {clue:"A dam few tour itineraries bother with, past the one everyone photographs.", name:"Kundala Lake", desc:"A quieter reservoir beyond Mattupetty, with pedal boats and pine-lined banks."}
+    ]
+  },
+  "Leh-Ladakh": {
+    tag: "High-altitude desert, monasteries, and Himalayan passes",
+    currency: "₹",
+    cost: { budget: {stay:900, food:600, transport:500, activity:600}, comfort: {stay:3200, food:1200, transport:1100, activity:1400}, premium: {stay:9500, food:2600, transport:2200, activity:3000} },
+    attractions: [
+      {name:"Leh Palace & old town", desc:"A 17th-century royal palace overlooking the town, echoing Lhasa's Potala in miniature."},
+      {name:"Pangong Tso day trip", desc:"A high-altitude lake that changes colour through the day, roughly five hours each way."},
+      {name:"Thiksey & Hemis Monasteries", desc:"Two of Ladakh's grandest Buddhist monasteries, both still active."},
+      {name:"Nubra Valley & Khardung La", desc:"A crossing of one of the world's highest motorable passes into a cold desert valley with sand dunes."},
+      {name:"Shanti Stupa", desc:"A hilltop white-domed stupa with sunset views over the Indus valley."},
+      {name:"Magnetic Hill & Sangam viewpoint", desc:"An optical-illusion 'hill' and the confluence of the Indus and Zanskar rivers."}
+    ],
+    hiddenGems: [
+      {clue:"A village on the way to Nubra that every convoy drives through without stopping.", name:"Sumur village orchards", desc:"A quiet apricot-growing village near Nubra with a small monastery and none of the dune-crowd traffic."},
+      {clue:"A lake locals rate above the famous one, on a rougher road most drivers avoid.", name:"Tso Moriri", desc:"A remote high-altitude lake south of Pangong, reached by a longer, bumpier drive and rewarded with near-total solitude."}
+    ]
+  },
+  "Andaman": {
+    tag: "Coral reefs and rainforest islands in the Bay of Bengal",
+    currency: "₹",
+    cost: { budget: {stay:1200, food:600, transport:500, activity:700}, comfort: {stay:3800, food:1300, transport:1100, activity:1600}, premium: {stay:11000, food:2800, transport:2400, activity:3500} },
+    attractions: [
+      {name:"Radhanagar Beach, Havelock", desc:"Consistently rated one of Asia's best beaches, with fine white sand and calm water."},
+      {name:"Cellular Jail light-and-sound show, Port Blair", desc:"A colonial-era prison turned memorial, with an evening show on its history."},
+      {name:"Elephant Beach snorkelling", desc:"A short boat ride from Havelock to a reef good for beginner snorkelling."},
+      {name:"Neil Island's Bharatpur & Laxmanpur beaches", desc:"A quieter island reachable by ferry, good for a slower day."},
+      {name:"Ross Island (Netaji Subhas Chandra Bose Island)", desc:"Ruins of the old British administrative headquarters, now reclaimed by the forest."},
+      {name:"North Bay Island coral reef", desc:"Glass-bottom boats and snorkelling close to Port Blair."}
+    ],
+    hiddenGems: [
+      {clue:"A beach on Havelock with no name on most maps, past where the resort shuttles stop.", name:"Kalapathar Beach", desc:"A rocky, near-empty stretch of Havelock coastline popular with locals at sunrise, largely skipped by day-trippers."},
+      {clue:"An island reachable only by a fixed daily ferry, which keeps the crowds naturally thin.", name:"Long Island", desc:"A sparsely visited island with mangrove creeks and a beach walk to Merk Bay that most itineraries never include."}
+    ]
+  },
+  "Varanasi": {
+    tag: "Ghats on the Ganga, one of the world's oldest living cities",
+    currency: "₹",
+    cost: { budget: {stay:450, food:300, transport:150, activity:250}, comfort: {stay:1700, food:700, transport:350, activity:600}, premium: {stay:5200, food:1600, transport:900, activity:1500} },
+    attractions: [
+      {name:"Dashashwamedh Ghat evening aarti", desc:"The city's most elaborate river ceremony, with fire, drums, and crowds along the steps."},
+      {name:"Sunrise boat ride on the Ganga", desc:"A slow row past the ghats as the city wakes, usually the highlight of a first visit."},
+      {name:"Kashi Vishwanath Temple", desc:"One of the twelve Jyotirlinga shrines to Shiva, rebuilt several times through the city's history."},
+      {name:"Sarnath", desc:"The deer park where the Buddha gave his first sermon, a short ride from the old city."},
+      {name:"Old city alley walk (galis)", desc:"A maze of lanes between the ghats and the temple, best explored slowly and on foot."},
+      {name:"Manikarnika Ghat", desc:"The city's main cremation ghat — approached respectfully, and often with a local guide."}
+    ],
+    hiddenGems: [
+      {clue:"A ghat downstream from the crowds, where the boats turn back before reaching it.", name:"Panchganga Ghat", desc:"A quieter, weather-worn ghat where the morning ritual pace feels closer to daily life than performance."},
+      {clue:"A weaving neighbourhood behind the tourist lanes that few boat tours mention.", name:"Madanpura silk-weaving quarter", desc:"The residential lanes where much of Varanasi's Banarasi silk is still hand-woven on wooden looms."}
+    ]
+  },
+  "Pondicherry": {
+    tag: "French Quarter streets and a slower stretch of Tamil Nadu coast",
+    currency: "₹",
+    cost: { budget: {stay:700, food:450, transport:200, activity:300}, comfort: {stay:2400, food:950, transport:450, activity:700}, premium: {stay:7000, food:2100, transport:1000, activity:1600} },
+    attractions: [
+      {name:"French Quarter (White Town) walk", desc:"Mustard-and-white colonial villas, bougainvillea, and quiet grid streets by the sea."},
+      {name:"Promenade Beach", desc:"A car-free seafront walk past the Gandhi statue and old lighthouse."},
+      {name:"Auroville & the Matrimandir", desc:"An experimental township nearby, centred on a golden meditation dome (viewing from a distance, by pass)."},
+      {name:"Sri Aurobindo Ashram", desc:"A quiet ashram in the old town, open for short visits."},
+      {name:"Paradise Beach, Chunnambar", desc:"A boat ride through a backwater to a sandy beach on a barrier island."},
+      {name:"Serenity Beach", desc:"A newer, café-lined stretch popular for surf lessons."}
+    ],
+    hiddenGems: [
+      {clue:"A backwater village behind Auroville that the tour buses never turn into.", name:"Kuilapalayam village lanes", desc:"A quiet Tamil village bordering Auroville, with weekly markets and none of the ashram-visitor traffic."},
+      {clue:"A beach south of the busy ones, past a fishing hamlet with no signage.", name:"Veerampattinam Beach", desc:"A working fishing beach a short ride from town, with boats, nets, and almost no tourists."}
+    ]
+  }
+};
+
+const DEST_KEYS = Object.keys(DATA);
+const TIER_LABEL = { budget:"Shoestring", comfort:"Comfortable", premium:"Premium" };
+const SLOTS = ["Morning","Midday","Afternoon","Evening"];
+
+/* fill datalist */
+const destList = document.getElementById('dest-list');
+DEST_KEYS.forEach(k=>{
+  const opt = document.createElement('option');
+  opt.value = k;
+  destList.appendChild(opt);
+});
+
+document.getElementById('show-list-btn').addEventListener('click', ()=>{
+  document.getElementById('dest-input').focus();
+});
+
+function findDest(input){
+  const clean = input.trim().toLowerCase();
+  return DEST_KEYS.find(k => k.toLowerCase() === clean)
+    || DEST_KEYS.find(k => k.toLowerCase().includes(clean) && clean.length > 2);
+}
+
+function money(n){
+  return "₹" + Math.round(n).toLocaleString('en-IN');
+}
+
+function buildDays(dest, days){
+  const pool = dest.attractions.slice();
+  const perDayCount = pool.length >= days*2 ? 2 : Math.max(1, Math.ceil(pool.length/days));
+  const dayList = [];
+  let idx = 0;
+  for(let d=1; d<=days; d++){
+    const stops = [];
+    const count = d===days ? Math.max(1, perDayCount-1) : perDayCount; // ease off on the last day
+    for(let s=0; s<count; s++){
+      stops.push(pool[idx % pool.length]);
+      idx++;
+    }
+    dayList.push({ day:d, stops, isLast: d===days });
+  }
+  return dayList;
+}
+
+function renderResults(destName, dest, days, tier){
+  document.getElementById('res-place').textContent = destName.replace('-', '–');
+  document.getElementById('res-tag').textContent = dest.tag;
+
+  // timeline
+  const timeline = document.getElementById('timeline');
+  timeline.innerHTML = '';
+  const dayList = buildDays(dest, days);
+  dayList.forEach(dayObj=>{
+    const div = document.createElement('div');
+    div.className = 'day';
+    const note = dayObj.isLast && days>1 ? "Lighter pace — leave room for the ferry, flight or road out." : "";
+    div.innerHTML = `
+      <p class="day-title">Day ${dayObj.day}</p>
+      ${note ? `<p class="day-note">${note}</p>` : ''}
+      <ul class="stops">
+        ${dayObj.stops.map((s,i)=>`
+          <li>
+            <span class="slot">${SLOTS[i % SLOTS.length]}</span>
+            <div>
+              <p class="stop-name">${s.name}</p>
+              <p class="stop-desc">${s.desc}</p>
+            </div>
+          </li>
+        `).join('')}
+      </ul>
+    `;
+    timeline.appendChild(div);
+  });
+
+  // ledger
+  const c = dest.cost[tier];
+  const rows = [
+    ["Stay", c.stay],
+    ["Food", c.food],
+    ["Local transport", c.transport],
+    ["Activities & entry fees", c.activity],
+  ];
+  const perDayTotal = c.stay + c.food + c.transport + c.activity;
+  const grandTotal = perDayTotal * days;
+
+  const body = document.getElementById('ledger-body');
+  body.innerHTML = rows.map(([label, amt])=>`
+    <tr><td>${label}</td><td class="num">${money(amt)}</td><td class="num">${money(amt*days)}</td></tr>
+  `).join('') + `
+    <tr class="total"><td>Estimated total</td><td></td><td class="num">${money(grandTotal)}</td></tr>
+  `;
+  document.getElementById('ledger-foot').textContent =
+    `${TIER_LABEL[tier]} style, per person, for ${days} day${days>1?'s':''} — excludes flights or trains to reach ${destName.replace('-', '–')}.`;
+
+  // hidden gems
+  const gemsEl = document.getElementById('gems');
+  gemsEl.innerHTML = '';
+  const gemCount = Math.min(dest.hiddenGems.length, days>=3 ? 2 : 1);
+  dest.hiddenGems.slice(0, gemCount).forEach(g=>{
+    const card = document.createElement('div');
+    card.className = 'gem-card';
+    card.innerHTML = `
+      <p class="gem-clue">${g.clue}</p>
+      <div class="gem-content">
+        <p class="gem-name">${g.name}</p>
+        <p class="gem-desc">${g.desc}</p>
+      </div>
+      <button class="wax-seal" type="button" aria-label="Break the seal to reveal this hidden gem">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3l2.2 4.6 5 .8-3.6 3.6.9 5-4.5-2.4-4.5 2.4.9-5-3.6-3.6 5-.8L12 3z" fill="#F5EFD8"/>
+        </svg>
+      </button>
+    `;
+    const seal = card.querySelector('.wax-seal');
+    seal.addEventListener('click', ()=>{
+      seal.classList.add('broken');
+      setTimeout(()=> card.classList.add('revealed'), 200);
+    });
+    gemsEl.appendChild(card);
+  });
+
+  document.getElementById('results').classList.add('show');
+  document.getElementById('results').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+document.getElementById('plan-form').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const raw = document.getElementById('dest-input').value;
+  const days = Math.min(10, Math.max(1, parseInt(document.getElementById('days-input').value || "3", 10)));
+  const tier = document.querySelector('input[name="tier"]:checked').value;
+
+  const key = findDest(raw);
+  const notice = document.getElementById('unknown-notice');
+  if(!key){
+    notice.classList.add('show');
+    document.getElementById('results').classList.remove('show');
+    return;
+  }
+  notice.classList.remove('show');
+  renderResults(key, DATA[key], days, tier);
+});
+</script>
+</body>
+</html>
