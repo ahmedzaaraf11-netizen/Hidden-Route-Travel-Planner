@@ -2,7 +2,7 @@
 
 A final year BCA project: a single-page web app that generates a day-by-day itinerary, a cost estimate, and locally-known "hidden gem" spots for a chosen destination and trip length.
 
-**Live demo:** _add your GitHub Pages link here once enabled, e.g. `https://yourusername.github.io/hidden-route-travel-planner/`_
+**Live demo:** _add your GitHub Pages link here once enabled, e.g. `https://ahmedzaaraf11-netizen.github.io/hidden-route-travel-planner/
 
 ## What it does
 
